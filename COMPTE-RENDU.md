@@ -16,7 +16,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Temps de chargement de la page** : TEMPS
 
-**Temps consommé par `getDB()`** 
+**Temps consommé par `le global`** 
 
 - **Avant** 30.2
 

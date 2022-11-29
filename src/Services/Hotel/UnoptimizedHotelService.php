@@ -4,9 +4,11 @@ namespace App\Services\Hotel;
 
 use App\Common\FilterException;
 use App\Common\SingletonTrait;
+use App\Common\Timers;
 use App\Entities\HotelEntity;
 use App\Entities\RoomEntity;
 use App\Services\Room\RoomService;
+use App\Common\PDOSingleton;
 use Exception;
 use PDO;
 
@@ -17,9 +19,13 @@ class UnoptimizedHotelService extends AbstractHotelService {
   
   use SingletonTrait;
   
-  
+  private PDO $db;
+  private Timers $timer;
+
   protected function __construct () {
     parent::__construct( new RoomService() );
+    $this->timer = Timers::getInstance();
+    $this->db = PDOSingleton::get();
   }
   
   
@@ -30,8 +36,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getDB () : PDO {
-    $pdo = new PDO( "mysql:host=db;dbname=tp;charset=utf8mb4", "root", "root" );
-    return $pdo;
+    return $this->db;
   }
   
   
@@ -44,6 +49,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @return string|null
    */
   protected function getMeta ( int $userId, string $key ) : ?string {
+    $time = $this->timer->startTimer("Meta1");
     $db = $this->getDB();
     $stmt = $db->prepare( "SELECT * FROM wp_usermeta" );
     $stmt->execute();
@@ -54,7 +60,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       if ( $row['user_id'] === $userId && $row['meta_key'] === $key )
         $output = $row['meta_value'];
     }
-    
+    $this->timer->endTimer("Meta1", $time);
     return $output;
   }
   
@@ -68,6 +74,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getMetas ( HotelEntity $hotel ) : array {
+    $time = $this->timer->startTimer("Meta2");
     $metaDatas = [
       'address' => [
         'address_1' => $this->getMeta( $hotel->getId(), 'address_1' ),
@@ -81,7 +88,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       'coverImage' =>  $this->getMeta( $hotel->getId(), 'coverImage' ),
       'phone' =>  $this->getMeta( $hotel->getId(), 'phone' ),
     ];
-    
+    $this->timer->endTimer("Meta2", $time);
     return $metaDatas;
   }
   
@@ -95,6 +102,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getReviews ( HotelEntity $hotel ) : array {
+    $time = $this->timer->startTimer("Review");
     // Récupère tous les avis d'un hotel
     $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'" );
     $stmt->execute( [ 'hotelId' => $hotel->getId() ] );
@@ -109,7 +117,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       'rating' => round( array_sum( $reviews ) / count( $reviews ) ),
       'count' => count( $reviews ),
     ];
-    
+    $this->timer->endTimer("Review", $time);
     return $output;
   }
   
@@ -220,6 +228,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @throws Exception
    */
   protected function convertEntityFromArray ( array $data, array $args ) : HotelEntity {
+    $time = $this->timer->startTimer("Convertion");
     $hotel = ( new HotelEntity() )
       ->setId( $data['ID'] )
       ->setName( $data['display_name'] );
@@ -253,7 +262,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       if ( $hotel->getDistance() > $args['distance'] )
         throw new FilterException( "L'hôtel est en dehors du rayon de recherche" );
     }
-    
+    $this->timer->endTimer("Convertion", $time);
     return $hotel;
   }
   

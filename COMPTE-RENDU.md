@@ -16,7 +16,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Temps de chargement de la page** : TEMPS
 
-**Temps consommé par `getDB()`** 
+**Temps consommé par `le global`** 
 
 - **Avant** 30.2
 
@@ -29,39 +29,39 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Temps de chargement globaux** 
 
-- **Avant** TEMPS
+- **Avant** 28.9
 
-- **Après** TEMPS
+- **Après** 
 
 
-#### Amélioration de la méthode `METHOD` et donc de la méthode `METHOD` :
+#### Amélioration de la méthode `getMeta` et donc de la méthode `getMetas` :
 
-- **Avant** TEMPS
+- **Avant** 28.9
 
 ```sql
--- REQ SQL DE BASE
+-- SELECT * FROM wp_usermeta
 ```
 
-- **Après** TEMPS
+- **Après** 27.6
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT meta_value FROM wp_usermeta where user_id = :id AND meta_key = :key
 ```
 
 
 
 #### Amélioration de la méthode `METHOD` :
 
-- **Avant** TEMPS
+- **Avant** 27.6
 
 ```sql
--- REQ SQL DE BASE
+-- SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
-- **Après** TEMPS
+- **Après** 25.9
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT round(AVG(meta_value)) as rating, COUNT(meta_value) as count FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
 

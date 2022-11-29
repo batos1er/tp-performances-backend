@@ -34,18 +34,18 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Après** 
 
 
-#### Amélioration de la méthode `METHOD` et donc de la méthode `METHOD` :
+#### Amélioration de la méthode `getMeta` et donc de la méthode `getMetas` :
 
-- **Avant** TEMPS
+- **Avant** 28.9
 
 ```sql
--- REQ SQL DE BASE
+-- SELECT * FROM wp_usermeta
 ```
 
-- **Après** TEMPS
+- **Après** 27.6
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT meta_value FROM wp_usermeta where user_id = :id AND meta_key = :key
 ```
 
 
@@ -55,13 +55,13 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Avant** TEMPS
 
 ```sql
--- REQ SQL DE BASE
+-- SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT round(AVG(meta_value)) as rating, COUNT(meta_value) as count FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
 

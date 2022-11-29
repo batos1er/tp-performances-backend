@@ -51,17 +51,14 @@ class UnoptimizedHotelService extends AbstractHotelService {
   protected function getMeta ( int $userId, string $key ) : ?string {
     $time = $this->timer->startTimer("Meta1");
     $db = $this->getDB();
-    $stmt = $db->prepare( "SELECT * FROM wp_usermeta" );
-    $stmt->execute();
+    $stmt = $db->prepare( "SELECT meta_value FROM wp_usermeta where user_id = :id AND meta_key = :key");
+    $stmt->execute([
+      "id"=>$userId,
+      "key"=>$key
+    ]);
     
-    $result = $stmt->fetchAll( PDO::FETCH_ASSOC );
-    $output = null;
-    foreach ( $result as $row ) {
-      if ( $row['user_id'] === $userId && $row['meta_key'] === $key )
-        $output = $row['meta_value'];
-    }
     $this->timer->endTimer("Meta1", $time);
-    return $output;
+    return $stmt->fetchColumn();
   }
   
   
@@ -104,21 +101,11 @@ class UnoptimizedHotelService extends AbstractHotelService {
   protected function getReviews ( HotelEntity $hotel ) : array {
     $time = $this->timer->startTimer("Review");
     // Récupère tous les avis d'un hotel
-    $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'" );
+    $stmt = $this->getDB()->prepare( "SELECT round(AVG(meta_value)) as rating, COUNT(meta_value) as count FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'" );
     $stmt->execute( [ 'hotelId' => $hotel->getId() ] );
     $reviews = $stmt->fetchAll( PDO::FETCH_ASSOC );
-    
-    // Sur les lignes, ne garde que la note de l'avis
-    $reviews = array_map( function ( $review ) {
-      return intval( $review['meta_value'] );
-    }, $reviews );
-    
-    $output = [
-      'rating' => round( array_sum( $reviews ) / count( $reviews ) ),
-      'count' => count( $reviews ),
-    ];
     $this->timer->endTimer("Review", $time);
-    return $output;
+    return $reviews[0];
   }
   
   
@@ -139,7 +126,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    *
    * @throws FilterException
    * @return RoomEntity
-   */
+   */&éé
   protected function getCheapestRoom ( HotelEntity $hotel, array $args = [] ) : RoomEntity {
     // On charge toutes les chambres de l'hôtel
     $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts WHERE post_author = :hotelId AND post_type = 'room'" );
@@ -156,31 +143,30 @@ class UnoptimizedHotelService extends AbstractHotelService {
     
     // On exclut les chambres qui ne correspondent pas aux critères
     $filteredRooms = [];
+
+    $whereClauses = [];
+
+      if ( isset( $args['surface']['min'] ))
+        $whereClauses[] = 'surface >= :surfaceMin';
+      
+      if ( isset( $args['surface']['max'] ))
+        $whereClauses[] = 'surface >= :surfaceMax';
+      
+      if ( isset( $args['price']['min'] ))
+        $whereClauses[] = 'price >= :priceMin';
+      
+      if ( isset( $args['price']['max'] ))
+        $whereClauses[] = 'price >= :priceMax';
+      
+      if ( isset( $args['rooms'] ))
+        $whereClauses[] = 'room >= :nbRoom';
+      
+      if ( isset( $args['bathRooms'] ))
+        $whereClauses[] = 'bathRoom >= :nbBathRoom';
+      
+      if ( isset( $args['types'] ) && ! empty( $args['types'] )) )
+        $whereClauses[] = 'type == :type';
     
-    foreach ( $rooms as $room ) {
-      if ( isset( $args['surface']['min'] ) && $room->getSurface() < $args['surface']['min'] )
-        continue;
-      
-      if ( isset( $args['surface']['max'] ) && $room->getSurface() > $args['surface']['max'] )
-        continue;
-      
-      if ( isset( $args['price']['min'] ) && intval( $room->getPrice() ) < $args['price']['min'] )
-        continue;
-      
-      if ( isset( $args['price']['max'] ) && intval( $room->getPrice() ) > $args['price']['max'] )
-        continue;
-      
-      if ( isset( $args['rooms'] ) && $room->getBedRoomsCount() < $args['rooms'] )
-        continue;
-      
-      if ( isset( $args['bathRooms'] ) && $room->getBathRoomsCount() < $args['bathRooms'] )
-        continue;
-      
-      if ( isset( $args['types'] ) && ! empty( $args['types'] ) && ! in_array( $room->getType(), $args['types'] ) )
-        continue;
-      
-      $filteredRooms[] = $room;
-    }
     
     // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().
     if ( count( $filteredRooms ) < 1 )

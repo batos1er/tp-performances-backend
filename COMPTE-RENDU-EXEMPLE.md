@@ -18,9 +18,11 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Temps consommé par `getDB()`** 
 
-- **Avant** TEMPS
+- **Avant** 30.2
 
-- **Après** TEMPS
+- **Methode Baptiste** 27.8
+
+- **Après** 18.9
 
 
 ## Question 4 : Délégation des opérations de filtrage à la base de données

@@ -126,23 +126,9 @@ class UnoptimizedHotelService extends AbstractHotelService {
    *
    * @throws FilterException
    * @return RoomEntity
-   */&éé
+   */
   protected function getCheapestRoom ( HotelEntity $hotel, array $args = [] ) : RoomEntity {
     // On charge toutes les chambres de l'hôtel
-    $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts WHERE post_author = :hotelId AND post_type = 'room'" );
-    $stmt->execute( [ 'hotelId' => $hotel->getId() ] );
-    
-    /**
-     * On convertit les lignes en instances de chambres (au passage ça charge toutes les données).
-     *
-     * @var RoomEntity[] $rooms ;
-     */
-    $rooms = array_map( function ( $row ) {
-      return $this->getRoomService()->get( $row['ID'] );
-    }, $stmt->fetchAll( PDO::FETCH_ASSOC ) );
-    
-    // On exclut les chambres qui ne correspondent pas aux critères
-    $filteredRooms = [];
 
     $whereClauses = [];
 
@@ -164,27 +150,71 @@ class UnoptimizedHotelService extends AbstractHotelService {
       if ( isset( $args['bathRooms'] ))
         $whereClauses[] = 'bathRoom >= :nbBathRoom';
       
-      if ( isset( $args['types'] ) && ! empty( $args['types'] )) )
+      if ( isset( $args['types'] ))
         $whereClauses[] = 'type == :type';
-    
-    
+
+      $query = "SELECT
+         post.ID,
+         post.post_author,
+         post.post_title,
+         MIN(CAST(priceData.meta_value AS UNSIGNED)) AS price,
+         CAST(surfaceData.meta_value AS UNSIGNED) AS surface,
+         CAST(roomData.meta_value AS UNSIGNED) AS room,
+         CAST(bathRoomData.meta_value AS UNSIGNED) AS bathRoom,
+         CAST(typeData.meta_value AS UNSIGNED) AS type
+      FROM
+         tp.wp_posts AS post
+            INNER JOIN tp.wp_postmeta AS priceData ON post.ID = priceData.post_id
+            AND priceData.meta_key = 'price'
+            INNER JOIN tp.wp_postmeta AS surfaceData ON post.ID = surfaceData.post_id
+            AND surfaceData.meta_key = 'surface'
+            INNER JOIN tp.wp_postmeta AS roomData ON post.ID = roomData.post_id
+            AND roomData.meta_key = 'bedrooms_count'
+            INNER JOIN tp.wp_postmeta AS bathRoomData ON post.ID = bathRoomData.post_id
+            AND bathRoomData.meta_key = 'bathrooms_count'
+            INNER JOIN tp.wp_postmeta AS typeData ON post.ID = typeData.post_id
+            AND typeData.meta_key = 'type'
+      WHERE
+         post.post_type = 'room'";
+
+      if ( count($whereClauses) > 0 )
+          $query .=  implode( ' AND ', $whereClauses ) . "GROUP BY post.post_author";
+
+
+      $stmt = $this->getDB()->prepare($query);
+
+      if ( isset( $args['surface']['min'] ))
+          $stmt->bindParam('myFilter', $args['surface']['min'], PDO::PARAM_INT);
+
+      if ( isset( $args['surface']['max'] ))
+          $whereClauses[] = 'surface >= :surfaceMax';
+
+      if ( isset( $args['price']['min'] ))
+          $whereClauses[] = 'price >= :priceMin';
+
+      if ( isset( $args['price']['max'] ))
+          $whereClauses[] = 'price >= :priceMax';
+
+      if ( isset( $args['rooms'] ))
+          $whereClauses[] = 'room >= :nbRoom';
+
+      if ( isset( $args['bathRooms'] ))
+          $whereClauses[] = 'bathRoom >= :nbBathRoom';
+
+      if ( isset( $args['types'] ))
+          $whereClauses[] = 'type == :type';
+
+      $stmt->execute( ['hotelId' => $hotel->getId()]);
+      $chambrePrixBas = $stmt->fetchAll( PDO::FETCH_ASSOC );
+      dump($chambrePrixBas);
     // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().
-    if ( count( $filteredRooms ) < 1 )
+    if ( count( $chambrePrixBas ) < 1 )
       throw new FilterException( "Aucune chambre ne correspond aux critères" );
-    
-    
-    // Trouve le prix le plus bas dans les résultats de recherche
-    $cheapestRoom = null;
-    foreach ( $filteredRooms as $room ) :
-      if ( ! isset( $cheapestRoom ) ) {
-        $cheapestRoom = $room;
-        continue;
-      }
-      
-      if ( intval( $room->getPrice() ) < intval( $cheapestRoom->getPrice() ) )
-        $cheapestRoom = $room;
-    endforeach;
-    
+
+
+    $cheapestRoom = $chambrePrixBas[0][0];
+
+
     return $cheapestRoom;
   }
   

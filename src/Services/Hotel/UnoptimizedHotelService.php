@@ -133,7 +133,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
     $whereClauses = [];
 
       if ( isset( $args['surface']['min'] )) {
-          $whereClauses[] = 'surfaceData.meta_value >= :surfaceMin';
+          //$whereClauses[] = 'surfaceData.meta_value >= :surfaceMin';
       }
 
       if ( isset( $args['surface']['max'] )) {
@@ -141,19 +141,19 @@ class UnoptimizedHotelService extends AbstractHotelService {
       }
 
       if ( isset( $args['price']['min'] )) {
-          $whereClauses[] = 'priceData.meta_value >= :priceMin';
+          //$whereClauses[] = 'priceData.meta_value >= :priceMin';
       }
 
       if ( isset( $args['price']['max'] )) {
-          $whereClauses[] = 'priceData.meta_value <= :priceMax';
+          //$whereClauses[] = 'priceData.meta_value <= :priceMax';
       }
 
       if ( isset( $args['rooms'] )) {
-          $whereClauses[] = 'roomData.meta_value >= :nbRoom';
+          //$whereClauses[] = 'roomData.meta_value >= :nbRoom';
       }
 
       if ( isset( $args['bathRooms'] )) {
-          $whereClauses[] = 'bathRoomData.meta_value >= :nbBathRoom';
+          //$whereClauses[] = 'bathRoomData.meta_value >= :nbBathRoom';
       }
 
       if ( isset( $args['types']) && !empty($args['types'])) {
@@ -190,7 +190,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       $stmt = $this->getDB()->prepare($query);
 
       if ( isset( $args['surface']['min'] )) {
-          $stmt->bindParam('surfaceMin', $args['surface']['min'], PDO::PARAM_INT);
+          //$stmt->bindParam('surfaceMin', $args['surface']['min'], PDO::PARAM_INT);
       }
 
       if ( isset( $args['surface']['max'] )) {
@@ -198,19 +198,19 @@ class UnoptimizedHotelService extends AbstractHotelService {
       }
 
       if ( isset( $args['price']['min'] )) {
-          $stmt->bindParam('priceMin', $args['price']['min'], PDO::PARAM_INT);
+          //$stmt->bindParam('priceMin', $args['price']['min'], PDO::PARAM_INT);
       }
 
       if ( isset( $args['price']['max'] )) {
-          $stmt->bindParam('priceMax', $args['price']['max'], PDO::PARAM_INT);
+          //$stmt->bindParam('priceMax', $args['price']['max'], PDO::PARAM_INT);
       }
 
       if ( isset( $args['rooms'] )) {
-          $stmt->bindParam('nbRoom', $args['rooms'], PDO::PARAM_INT);
+          //$stmt->bindParam('nbRoom', $args['rooms'], PDO::PARAM_INT);
       }
 
       if ( isset( $args['bathRooms'] )) {
-          $stmt->bindParam('nbBathRoom', $args['bathRooms'], PDO::PARAM_INT);
+          //$stmt->bindParam('nbBathRoom', $args['bathRooms'], PDO::PARAM_INT);
       }
 
 

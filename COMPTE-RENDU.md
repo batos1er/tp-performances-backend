@@ -31,7 +31,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 - **Avant** 28.9
 
-- **Après** 
+- **Après** 21.7 au temps récupéré en classe (impossible chez moi quoi que je fasse j'étais en timeout)
 
 
 #### Amélioration de la méthode `getMeta` et donc de la méthode `getMetas` :
@@ -50,7 +50,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 
 
-#### Amélioration de la méthode `METHOD` :
+#### Amélioration de la méthode `getReviews` :
 
 - **Avant** 27.6
 
@@ -66,18 +66,40 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 
 
-#### Amélioration de la méthode `METHOD` :
+#### Amélioration de la méthode `getCheapestRoom` :
 
-- **Avant** TEMPS
+- **Avant** 25.9
 
 ```sql
 -- REQ SQL DE BASE
 ```
 
-- **Après** TEMPS
+- **Après** 21.7
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT
+         post.ID,
+         post.post_author,
+         post.post_title,
+         MIN(CAST(priceData.meta_value AS UNSIGNED)) AS price,
+         CAST(surfaceData.meta_value AS UNSIGNED) AS surface,
+         CAST(roomData.meta_value AS UNSIGNED) AS room,
+         CAST(bathRoomData.meta_value AS UNSIGNED) AS bathRoom,
+         typeData.meta_value AS type
+      FROM
+         tp.wp_posts AS post
+            INNER JOIN tp.wp_postmeta AS priceData ON post.ID = priceData.post_id
+            AND priceData.meta_key = 'price'
+            INNER JOIN tp.wp_postmeta AS surfaceData ON post.ID = surfaceData.post_id
+            AND surfaceData.meta_key = 'surface'
+            INNER JOIN tp.wp_postmeta AS roomData ON post.ID = roomData.post_id
+            AND roomData.meta_key = 'bedrooms_count'
+            INNER JOIN tp.wp_postmeta AS bathRoomData ON post.ID = bathRoomData.post_id
+            AND bathRoomData.meta_key = 'bathrooms_count'
+            INNER JOIN tp.wp_postmeta AS typeData ON post.ID = typeData.post_id
+            AND typeData.meta_key = 'type'
+      WHERE
+         post.post_type = 'room' + les autres where
 ```
 
 
